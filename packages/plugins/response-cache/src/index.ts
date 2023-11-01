@@ -80,17 +80,19 @@ function getCacheForResponseCache(meshCache: KeyValueCache): UseResponseCachePar
             cacheEntriesToDelete.map(cacheEntryName => {
               const [, , responseId] = cacheEntryName.split(':');
               responseIdsToCheck.add(responseId);
-              return meshCache.delete(entryId);
+              return meshCache.delete(cacheEntryName);
             }),
           );
         }),
       );
       await Promise.all(
         [...responseIdsToCheck].map(async responseId => {
-          const cacheEntries = await meshCache.getKeysByPrefix(`response-cache:${responseId}:`);
-          if (cacheEntries.length === 0) {
-            await meshCache.delete(`response-cache:${responseId}`);
-          }
+          const cacheEntries = await meshCache.getKeysByPrefix(`response-cache:${responseId}`);
+          await Promise.all(
+            cacheEntries.map(cacheEntryName => {
+              return meshCache.delete(cacheEntryName);
+            }),
+          );
         }),
       );
     },
